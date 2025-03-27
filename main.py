@@ -147,7 +147,7 @@ class GameUI:
             print("Không phải lượt của bạn!")
             return
 
-        # Các quân bài đã đánh theo thứ tự từ yếu đến mạnh
+        # Các quân bài chuẩn bị đánh theo thứ tự từ yếu đến mạnh
         played_cards = sorted(
             [self.game.players[player][i] for _, i in self.selected_cards],
             key=lambda card: (RANK_ORDER[card.rank], SUIT_ORDER[card.suit])

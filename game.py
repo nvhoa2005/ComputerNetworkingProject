@@ -8,6 +8,7 @@ class Game:
         self.deck = self.createDeck()
         random.shuffle(self.deck)
         self.players = {i: self.deck[i*13:(i+1)*13] for i in range(FOUR_PLAYERS)}
+        self.sortCard()
         # Người chơi hiện tại
         self.current_turn = None  
         # Bộ bài vừa được đánh
@@ -16,6 +17,13 @@ class Game:
         self.passed_players = set()
         # Xác định ai có 3 bích đi trước
         self.find_first_player() 
+    
+    def sortCard(self):
+        for player in range(FOUR_PLAYERS):
+            self.players[player] = sorted(
+                self.players[player],
+                key=lambda card: (RANK_ORDER[card.rank], SUIT_ORDER[card.suit])
+            )
     
     def display_hands(self):
         for i in range(FOUR_PLAYERS):
@@ -36,46 +44,43 @@ class Game:
     
     # Check bài đánh hợp lệ
     def is_valid_play(self, played_cards):
-        if not self.last_play:  
-            # Nếu là lượt mới, chỉ cần hợp lệ là được
-            return self.is_valid_hand(played_cards)
-
         # Kiểm tra bài đánh có hợp lệ không
         if not self.is_valid_hand(played_cards):
             return False
-
+        
+        # Nếu là lượt mới, chỉ cần hợp lệ là được
+        if not self.last_play:  
+            return self.is_valid_hand(played_cards)
         # Kiểm tra bài chuẩn bị đánh có mạnh hơn bài trước đó không
-        return self.compare_hands(self.last_play, played_cards)
+        else:
+            return self.compare_hands(self.last_play, played_cards)
 
     # Kiểm tra bài chuẩn bị đánh có hợp lệ không: đơn, đôi, sảnh, 3 cây, tứ quý, đôi thông
     def is_valid_hand(self, played_cards):
-        # Đơn
-        if len(played_cards) == 1:
-            return True
-        # Đôi
-        elif len(played_cards) == 2 and played_cards[0].rank == played_cards[1].rank:
-            return True
-        # 3 Cây
-        elif len(played_cards) == 3 and all(c.rank == played_cards[0].rank for c in played_cards):
-            return True
-        # Sảnh
-        elif self.is_straight(played_cards):
-            return True
-        # Tứ quý
-        elif len(played_cards) == 4 and all(c.rank == played_cards[0].rank for c in played_cards):
-            return True
-        # Đôi thông
-        elif self.is_consecutive_pairs(played_cards):
-            return True
-        return False
+        return self.is_single(played_cards) or self.is_pair(played_cards) or self.is_triple(played_cards) or self.is_quadruple(played_cards) or self.is_straight(played_cards) or self.is_consecutive_pairs(played_cards)
+    
+    # Kiểm tra có phải quân đơn không
+    def is_single(self, played_cards):
+        return len(played_cards) == 1
+        
+    # Kiểm tra có phải đánh đôi không
+    def is_pair(self, played_cards):
+        return len(played_cards) == 2 and played_cards[0].rank == played_cards[1].rank
+    
+    # Kiểm tra có phải đánh 3 cây không
+    def is_triple(self, played_cards):
+        return len(played_cards) == 3 and all(c.rank == played_cards[0].rank for c in played_cards)
+    
+    # Kiểm tra có phải đánh tứ quý không
+    def is_quadruple(self, played_cards):
+        return len(played_cards) == 4 and all(c.rank == played_cards[0].rank for c in played_cards)
     
     # Kiểm tra sảnh hợp lệ
     def is_straight(self, played_cards):
-        ranks = ["3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
         played_ranks = [c.rank for c in played_cards]
         if "2" in played_ranks:
             return False
-        return all(ranks.index(played_ranks[i]) + 1 == ranks.index(played_ranks[i + 1]) for i in range(len(played_ranks) - 1))
+        return all(RANKS.index(played_ranks[i]) + 1 == RANKS.index(played_ranks[i + 1]) for i in range(len(played_ranks) - 1))
 
     # Kiểm tra đôi thông
     def is_consecutive_pairs(self, played_cards):
@@ -90,19 +95,28 @@ class Game:
     # Xem xét bài chuẩn bị đánh có mạnh hơn bài cũ không
     def compare_hands(self, last_play, new_play):
         # Phải cùng loại đánh (đơn, đôi, sảnh, ....)
-        if len(last_play) != len(new_play):
+        if self.is_pair(last_play) != self.is_pair(new_play):
+            return False
+        elif self.is_triple(last_play) != self.is_triple(new_play):
+            return False
+        elif self.is_quadruple(last_play) != self.is_quadruple(new_play):
+            return False
+        elif self.is_single(last_play) != self.is_single(new_play):
+            return False
+        elif self.is_consecutive_pairs(last_play) != self.is_consecutive_pairs(new_play):
+            return False
+        elif self.is_straight(last_play) != self.is_straight(new_play):
             return False
 
-        last_rank = last_play[0].rank
-        new_rank = new_play[0].rank
+        last_rank = last_play[len(last_play)-1].rank
+        new_rank = new_play[len(new_play)-1].rank
 
         # So sánh thứ tự quân bài
-        ranks = ["3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "2"]
-        if ranks.index(new_rank) > ranks.index(last_rank):
+        if new_rank > last_rank:
             return True
-        if ranks.index(new_rank) == ranks.index(last_rank):  
+        elif new_rank == last_rank:
             # Nếu cùng số, so sánh chất
-            return self.compare_suits(last_play[0], new_play[0])
+            return self.compare_suits(last_play[len(last_play)-1], new_play[len(new_play)-1])
         return False
 
     # So sánh chất bài nếu cùng số
