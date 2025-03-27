@@ -88,8 +88,11 @@ class GameUI:
             self.play_cards(current_player)
             return
         if self.buttons[current_player]["pass"].collidepoint(pos):
-            self.game.pass_turn(current_player)
-            self.selected_cards.clear()
+            if self.game.last_play:
+                self.game.pass_turn(current_player)
+                self.selected_cards.clear()
+            else:
+                print("Đây là vòng mới nên bản không thể bỏ qua lượt đánh này")
             return
 
         for player, position in PLAYER_POSITIONS.items():

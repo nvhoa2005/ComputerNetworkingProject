@@ -17,6 +17,7 @@ class Game:
         self.passed_players = set()
         # Xác định ai có 3 bích đi trước
         self.find_first_player() 
+        self.first_turn = False
     
     def sortCard(self):
         for player in range(FOUR_PLAYERS):
@@ -48,6 +49,15 @@ class Game:
         if not self.is_valid_hand(played_cards):
             return False
         
+        # Nếu lượt đánh đầu tiên mà không đánh 3 bích là lỗi
+        if not self.first_turn:
+            for card in played_cards:
+                if card.rank == "3" and card.suit == "♠":
+                    self.first_turn = True
+                    break
+        if not self.first_turn:
+            return False
+        
         # Nếu là lượt mới, chỉ cần hợp lệ là được
         if not self.last_play:  
             return self.is_valid_hand(played_cards)
@@ -77,6 +87,8 @@ class Game:
     
     # Kiểm tra sảnh hợp lệ
     def is_straight(self, played_cards):
+        if len(played_cards) < 3:
+            return False
         played_ranks = [c.rank for c in played_cards]
         if "2" in played_ranks:
             return False
@@ -95,7 +107,27 @@ class Game:
     # Xem xét bài chuẩn bị đánh có mạnh hơn bài cũ không
     def compare_hands(self, last_play, new_play):
         # Phải cùng loại đánh (đơn, đôi, sảnh, ....)
-        if self.is_pair(last_play) != self.is_pair(new_play):
+        if self.is_single(last_play) and (self.is_quadruple(new_play) or self.is_consecutive_pairs(new_play)):
+            if last_play[0].rank == "2":
+                return True
+            return False
+        elif self.is_pair(last_play) and self.is_quadruple(new_play):
+            if last_play[0].rank == "2":
+                return True
+            return False
+        elif self.is_pair(last_play) and self.is_consecutive_pairs(new_play):
+            if last_play[0].rank == "2" and len(new_play) >= 8:
+                return True
+            return False
+        elif self.is_consecutive_pairs(last_play) and self.is_quadruple(new_play):
+            if len(last_play) == 6:
+                return True
+            return False
+        elif self.is_quadruple(last_play) and self.is_consecutive_pairs(new_play):
+            if len(new_play) >= 8:
+                return True
+            return False
+        elif self.is_pair(last_play) != self.is_pair(new_play):
             return False
         elif self.is_triple(last_play) != self.is_triple(new_play):
             return False
@@ -112,7 +144,7 @@ class Game:
         new_rank = new_play[len(new_play)-1].rank
 
         # So sánh thứ tự quân bài
-        if new_rank > last_rank:
+        if RANK_ORDER[new_rank] > RANK_ORDER[last_rank]:
             return True
         elif new_rank == last_rank:
             # Nếu cùng số, so sánh chất
