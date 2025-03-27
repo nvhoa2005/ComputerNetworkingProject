@@ -188,15 +188,19 @@ class Game:
         if len(self.passed_players) == 3:
             # Clear bài cũ
             self.last_play = None 
-            # Clear những người đã bỏ qua
-            self.passed_players.clear()
             # Clear bài giữa màn hình
             self.center_cards = [] 
             # Next turn
             self.current_turn = (self.current_turn + 1) % 4 
+            while self.current_turn in self.passed_players:
+                self.current_turn = (self.current_turn + 1) % 4
+            # Clear những người đã bỏ qua
+            self.passed_players.clear()
             print("Vòng chơi mới bắt đầu!")
         else:
             # Next turn
             self.current_turn = (self.current_turn + 1) % 4 
+            while self.current_turn in self.passed_players:
+                self.current_turn = (self.current_turn + 1) % 4
             print(f"Người chơi {player + 1} bỏ lượt.")
     

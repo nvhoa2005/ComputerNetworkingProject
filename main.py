@@ -2,6 +2,7 @@
 import pygame
 from const import *
 from game import Game
+import math
 
 class GameUI:
     def __init__(self):
@@ -18,6 +19,10 @@ class GameUI:
         # Các quân bài đã đánh sẽ di chuyển ra giữa màn hình
         self.center_cards = []
 
+        # Thời gian giới hạn và bộ đếm thời gian
+        self.turn_time_limit = TIME_EACH_TURN
+        self.start_time = pygame.time.get_ticks()
+
         # Vị trí của nút đánh và bỏ lượt
         self.buttons = {
             0: {"play": pygame.Rect(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 310, 100, 50),
@@ -29,13 +34,63 @@ class GameUI:
             3: {"play": pygame.Rect(220, SCREEN_HEIGHT // 2 - 50, 80, 40),
                 "pass": pygame.Rect(220, SCREEN_HEIGHT // 2 + 10, 80, 40)}
         }
+        
+    # Vòng tròn đếm thời gian 
+    def draw_timer_circle(self, player):
+        time_passed = (pygame.time.get_ticks() - self.start_time) / 1000
+        remaining_time = max(0, self.turn_time_limit - time_passed)
+        
+        # Góc xoay theo thời gian (360 độ trong 10s)
+        angle = (remaining_time / self.turn_time_limit) * 360 + 90
+        
+        # Vị trí của vòng tròn thời gian
+        if player == 0:
+            x, y = (SCREEN_WIDTH - 450, SCREEN_HEIGHT - 150)
+        elif player == 1:
+            x, y = (SCREEN_WIDTH - 320, 50)
+        elif player == 2:
+            x, y = (300, 100)
+        elif player == 3:
+            x, y = (270, SCREEN_HEIGHT - 200)
+        
+        if player in [0, 2]:
+            x += 50
+        else:
+            y += 50
+        
+        pygame.draw.circle(self.screen, (255, 231, 215), (x, y), 40, 5)
+        end_x = x + 40 * math.cos(math.radians(-angle))
+        end_y = y + 40 * math.sin(math.radians(-angle))
+        pygame.draw.line(self.screen, (158, 0, 24), (x, y), (end_x, end_y), 5)
+        
+    # Kiểm tra thời gian nếu lượt mới thì đánh quân bất kỳ còn lại thì bỏ qua
+    def update_turn_timer(self):
+        time_passed = (pygame.time.get_ticks() - self.start_time) / 1000
+        if time_passed >= self.turn_time_limit:
+            if self.game.last_play:
+                self.game.pass_turn(self.game.current_turn)
+                self.start_time = pygame.time.get_ticks()
+                print(f"Đây là lượt của người chơi: {self.game.current_turn + 1}")
+                self.start_time = pygame.time.get_ticks()
+            else:
+                current_player = self.game.current_turn
+                player_hand = self.game.players[current_player]
+                if player_hand:
+                    # Chọn quân bài nhỏ nhất để đánh
+                    chosen_card = min(player_hand, key=lambda card: (RANK_ORDER[card.rank], SUIT_ORDER[card.suit]))
+                    card_id = (current_player, player_hand.index(chosen_card))
+                    self.selected_cards.add(card_id)
+                self.play_cards(current_player)
+                self.start_time = pygame.time.get_ticks()
+                print(f"Đây là lượt của người chơi: {self.game.current_turn + 1}")
+                self.start_time = pygame.time.get_ticks()
 
     def draw_buttons(self):
         for player in range(FOUR_PLAYERS):
             # Vẽ nút khi đến lượt người chơi (dùng để test chương trình)
             if self.game.current_turn == player:
-                pygame.draw.rect(self.screen, (0, 255, 0), self.buttons[player]["play"])  
-                pygame.draw.rect(self.screen, (255, 0, 0), self.buttons[player]["pass"]) 
+                pygame.draw.rect(self.screen, (1, 117, 132), self.buttons[player]["play"])  
+                pygame.draw.rect(self.screen, (201, 22, 38), self.buttons[player]["pass"]) 
 
                 font = pygame.font.Font(None, 30)
                 
@@ -86,10 +141,14 @@ class GameUI:
         # Xử lý bấm nút Play, Pass
         if self.buttons[current_player]["play"].collidepoint(pos):
             self.play_cards(current_player)
+            self.start_time = pygame.time.get_ticks()
+            print(f"Đây là lượt của người chơi: {self.game.current_turn + 1}")
             return
         if self.buttons[current_player]["pass"].collidepoint(pos):
             if self.game.last_play:
                 self.game.pass_turn(current_player)
+                self.start_time = pygame.time.get_ticks()
+                print(f"Đây là lượt của người chơi: {self.game.current_turn + 1}")
                 self.selected_cards.clear()
             else:
                 print("Đây là vòng mới nên bản không thể bỏ qua lượt đánh này")
@@ -155,6 +214,7 @@ class GameUI:
             [self.game.players[player][i] for _, i in self.selected_cards],
             key=lambda card: (RANK_ORDER[card.rank], SUIT_ORDER[card.suit])
         )
+        
         for i in range(len(played_cards)):
             print(played_cards[i].rank, played_cards[i].suit)
 
@@ -169,9 +229,14 @@ class GameUI:
 
     def run(self):
         while self.running:
-            self.screen.fill((0, 128, 0))
+            self.screen.fill((217, 143, 102))
             self.draw_cards()
             self.draw_buttons()
+            
+            # Hiển thị vòng tròn thời gian của người chơi hiện tại
+            self.draw_timer_circle(self.game.current_turn)
+            self.update_turn_timer()
+            
             pygame.display.flip()
 
             for event in pygame.event.get():
