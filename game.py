@@ -89,6 +89,7 @@ class Game:
     def is_straight(self, played_cards):
         if len(played_cards) < 3:
             return False
+        # Sảnh thì không chứa 2
         played_ranks = [c.rank for c in played_cards]
         if "2" in played_ranks:
             return False
@@ -96,6 +97,10 @@ class Game:
 
     # Kiểm tra đôi thông
     def is_consecutive_pairs(self, played_cards):
+        # Đôi thông không chứa 2
+        played_ranks = [c.rank for c in played_cards]
+        if "2" in played_ranks:
+            return False
         # Phải là số chẵn
         if len(played_cards) % 2 != 0:
             return False

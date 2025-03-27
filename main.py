@@ -75,7 +75,7 @@ class GameUI:
                     self.screen.blit(card.texture, (x + x_offset, y + i * spacing + y_offset))
 
         # Bài đã đánh ở giữa màn hình
-        center_x, center_y = SCREEN_WIDTH // 2 - (len(self.center_cards) * CARD_OFFSET) // 2, SCREEN_HEIGHT // 2
+        center_x, center_y = SCREEN_WIDTH // 2 - (len(self.center_cards) * CARD_OFFSET) // 2 - 100, SCREEN_HEIGHT // 2 - 100
         for i, card in enumerate(self.center_cards):
             self.screen.blit(card.texture, (center_x + i * CARD_OFFSET, center_y))
 
