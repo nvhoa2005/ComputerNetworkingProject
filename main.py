@@ -183,21 +183,31 @@ class GameUI:
 
 
     # Hiệu ứng khi đánh bài
-    def animate_cards_to_center(self, played_cards):
+    def animate_cards_to_center(self, played_cards, player):
         target_x, target_y = SCREEN_WIDTH // 2 - CARD_WIDTH // 2, SCREEN_HEIGHT // 2 - CARD_HEIGHT // 2
-        # Số bước di chuyển
-        frames = 15
+        frames = 15  # Số bước di chuyển
+
+        # Xác định vị trí bắt đầu dựa trên người chơi
+        if player == 0:  
+            start_x, start_y = 20, SCREEN_HEIGHT // 2
+        elif player == 1:  
+            start_x, start_y = SCREEN_WIDTH // 2, SCREEN_HEIGHT - CARD_HEIGHT - 20
+        elif player == 2:  
+            start_x, start_y = SCREEN_WIDTH - CARD_WIDTH - 20, SCREEN_HEIGHT // 2
+        elif player == 3:  
+            start_x, start_y = SCREEN_WIDTH // 2, 20
+        else:
+            return  # Trường hợp không hợp lệ
 
         for frame in range(frames):
-            self.screen.fill((0, 128, 0))
-            # Vẽ lại bài không bao gồm bài đang đánh
-            self.draw_cards()
+            self.screen.fill((217, 143, 102))  
+            self.draw_cards()  # Vẽ lại bài không bao gồm bài đang đánh
 
             for i, card in enumerate(played_cards):
-                x_step = (target_x - self.played_card_positions[i][0]) / frames
-                y_step = (target_y - self.played_card_positions[i][1]) / frames
-                new_x = self.played_card_positions[i][0] + x_step * frame
-                new_y = self.played_card_positions[i][1] + y_step * frame
+                x_step = (target_x - start_x) / frames
+                y_step = (target_y - start_y) / frames
+                new_x = start_x + x_step * frame
+                new_y = start_y + y_step * frame
                 self.screen.blit(card.texture, (new_x, new_y))
 
             pygame.display.flip()
@@ -221,6 +231,8 @@ class GameUI:
         if self.game.play_cards(player, played_cards):
             # Cập nhật bài đã được đánh di chuyển vào giữa màn hình
             self.center_cards = played_cards
+            self.played_card_positions = [(PLAYER_POSITIONS[0][0] + i * CARD_OFFSET, PLAYER_POSITIONS[0][1]) for _, i in sorted(self.selected_cards)]
+            self.animate_cards_to_center(played_cards, self.game.current_turn)
 
             # Xóa quân bài đã đánh
             for _, i in sorted(self.selected_cards, reverse=True):

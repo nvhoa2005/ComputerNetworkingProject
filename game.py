@@ -132,6 +132,9 @@ class Game:
             if len(new_play) >= 8:
                 return True
             return False
+        elif self.is_consecutive_pairs(last_play) and self.is_consecutive_pairs(new_play):
+            if len(new_play) > len(last_play):
+                return True
         elif self.is_pair(last_play) != self.is_pair(new_play):
             return False
         elif self.is_triple(last_play) != self.is_triple(new_play):
