@@ -133,6 +133,27 @@ class GameUI:
         center_x, center_y = SCREEN_WIDTH // 2 - (len(self.center_cards) * CARD_OFFSET) // 2 - 100, SCREEN_HEIGHT // 2 - 100
         for i, card in enumerate(self.center_cards):
             self.screen.blit(card.texture, (center_x + i * CARD_OFFSET, center_y))
+            
+    def draw_ranking(self):
+        font = pygame.font.Font(None, 30)
+        for player, rank in self.game.rankings:
+            print(player)
+            player_pos = (PLAYER_POSITIONS[player][0] + 300, PLAYER_POSITIONS[player][1] + 50)
+            if player == 1:
+                player_pos = (PLAYER_POSITIONS[player][0] + 100, PLAYER_POSITIONS[player][1] + 300)
+            elif player == 2:
+                player_pos = (PLAYER_POSITIONS[player][0] + 300, PLAYER_POSITIONS[player][1])
+            elif player == 3:
+                player_pos = (PLAYER_POSITIONS[player][0] + 50, PLAYER_POSITIONS[player][1] + 300)
+                
+            text_surface = font.render(f"Rank {rank}: Player {player + 1}", True, (15, 15, 15))
+
+            if player in [0, 2]:
+                self.screen.blit(text_surface, (player_pos[0], player_pos[1] + 40))
+            else: 
+                text_surface = pygame.transform.rotate(text_surface, 90)
+                self.screen.blit(text_surface, (player_pos[0] - 20, player_pos[1]))
+
 
     # Xử lý sự kiện click chuột
     def handle_click(self, pos):
@@ -233,17 +254,24 @@ class GameUI:
             self.center_cards = played_cards
             self.played_card_positions = [(PLAYER_POSITIONS[0][0] + i * CARD_OFFSET, PLAYER_POSITIONS[0][1]) for _, i in sorted(self.selected_cards)]
             self.animate_cards_to_center(played_cards, self.game.current_turn)
-
-            # Xóa quân bài đã đánh
-            for _, i in sorted(self.selected_cards, reverse=True):
-                del self.game.players[player][i]
+            for card in played_cards:
+                self.game.players[player].remove(card)
+            print(len(self.game.players[player]))
             self.selected_cards.clear()
+            
+            # check winner
+            if self.game.check_winner(player):
+                print(f"Người chơi {player+1} đạt rank {len(self.game.rankings)}")
 
     def run(self):
         while self.running:
+            if self.game.check_end():
+                self.running = False
+            
             self.screen.fill((217, 143, 102))
             self.draw_cards()
             self.draw_buttons()
+            self.draw_ranking()
             
             # Hiển thị vòng tròn thời gian của người chơi hiện tại
             self.draw_timer_circle(self.game.current_turn)

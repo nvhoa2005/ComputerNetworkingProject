@@ -15,6 +15,8 @@ class Game:
         self.last_play = None 
         # Những người đã bỏ lượt
         self.passed_players = set()
+        # Rank của từng người
+        self.rankings = set()
         # Xác định ai có 3 bích đi trước
         self.find_first_player() 
         self.first_turn = False
@@ -173,7 +175,7 @@ class Game:
             self.last_play = played_cards
             # Chuyển lượt
             self.current_turn = (self.current_turn + 1) % 4
-            while self.current_turn in self.passed_players:
+            while (self.current_turn in self.passed_players) or (self.current_turn in self.rankings):
                 self.current_turn = (self.current_turn + 1) % 4
             print(f"Người chơi {player + 1} đánh: {', '.join(str(c) for c in played_cards)}")
             return True
@@ -188,14 +190,14 @@ class Game:
             return
 
         self.passed_players.add(player)
-        if len(self.passed_players) == 3:
+        if len(self.passed_players) + len(self.rankings) == 3:
             # Clear bài cũ
             self.last_play = None 
             # Clear bài giữa màn hình
             self.center_cards = [] 
             # Next turn
             self.current_turn = (self.current_turn + 1) % 4 
-            while self.current_turn in self.passed_players:
+            while (self.current_turn in self.passed_players) or (self.current_turn in [item[0] for item in self.rankings]):
                 self.current_turn = (self.current_turn + 1) % 4
             # Clear những người đã bỏ qua
             self.passed_players.clear()
@@ -203,7 +205,20 @@ class Game:
         else:
             # Next turn
             self.current_turn = (self.current_turn + 1) % 4 
-            while self.current_turn in self.passed_players:
+            while (self.current_turn in self.passed_players) or (self.current_turn in [item[0] for item in self.rankings]):
                 self.current_turn = (self.current_turn + 1) % 4
             print(f"Người chơi {player + 1} bỏ lượt.")
     
+    # win
+    def check_winner(self, player_index):
+        if len(self.players[player_index]) == 0 and (player_index not in self.rankings):
+            self.rankings.add((player_index, len(self.rankings)+1))
+            self.last_play = None
+        return False
+    
+    # end
+    def check_end(self):
+        if len(self.rankings) == 3:
+            print("Kết thúc")
+            return True
+        return False
