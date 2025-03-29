@@ -124,10 +124,16 @@ class GameUI:
 
                 # Player 1, 3 xếp hàng ngang
                 if player in [0, 2]:
-                    self.screen.blit(card.texture, (x + i * spacing + x_offset, y + y_offset))
+                    if player != self.game.current_turn:
+                        self.screen.blit(card.unknown_card_texture, (x + i * spacing + x_offset, y + y_offset))
+                    else:
+                        self.screen.blit(card.texture, (x + i * spacing + x_offset, y + y_offset))
                 # Player 2, 4 xếp hàng dọc
                 else:
-                    self.screen.blit(card.texture, (x + x_offset, y + i * spacing + y_offset))
+                    if player != self.game.current_turn:
+                        self.screen.blit(card.unknown_card_texture, (x + x_offset, y + i * spacing + y_offset))
+                    else:
+                        self.screen.blit(card.texture, (x + x_offset, y + i * spacing + y_offset))
 
         # Bài đã đánh ở giữa màn hình
         center_x, center_y = SCREEN_WIDTH // 2 - (len(self.center_cards) * CARD_OFFSET) // 2 - 100, SCREEN_HEIGHT // 2 - 100
