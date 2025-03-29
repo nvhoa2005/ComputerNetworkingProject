@@ -1,14 +1,14 @@
 import random
+import pygame
 from card import Card
 from const import *
 
 class Game:
     
-    def __init__(self):
-        self.deck = self.createDeck()
-        random.shuffle(self.deck)
-        self.players = {i: self.deck[i*13:(i+1)*13] for i in range(FOUR_PLAYERS)}
-        self.sortCard()
+    def __init__(self, cards):
+        # Lưu các quân bài của từng player
+        self.players = cards
+        self.set_texture()
         # Người chơi hiện tại
         self.current_turn = None  
         # Bộ bài vừa được đánh
@@ -20,21 +20,19 @@ class Game:
         # Xác định ai có 3 bích đi trước
         self.find_first_player() 
         self.first_turn = False
+        self.display_hands()
     
-    def sortCard(self):
-        for player in range(FOUR_PLAYERS):
-            self.players[player] = sorted(
-                self.players[player],
-                key=lambda card: (RANK_ORDER[card.rank], SUIT_ORDER[card.suit])
-            )
+    def set_texture(self):
+        for player_id, hand in self.players.items():
+            for card in hand:
+                card.number = card.get_card_number()
+                card.texture = pygame.image.load(f"img/{card.number}.png")
+                card.unknown_card_texture = pygame.image.load("img/behind.png")
     
     def display_hands(self):
         for i in range(FOUR_PLAYERS):
-            hand = [f"{card.rank}{card.suit}" for card in self.players[i]]
+            hand = [f"{card.rank}{card.suit}: {card.texture}" for card in self.players[i]]
             print(f"Người chơi {i+1}: {', '.join(hand)}")
-    
-    def createDeck(self):
-        return [Card(suit, rank) for suit in SUITS for rank in RANKS]
     
     # Tìm người có 3 bích đánh trước
     def find_first_player(self):
