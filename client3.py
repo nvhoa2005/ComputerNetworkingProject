@@ -28,6 +28,7 @@ while not game_data["game_started"]:
 print("Trò chơi bắt đầu!")
 
 if __name__ == "__main__":
+    network.close()
     GameUI(game_data["hand"]).run()
 
 # def handle_update(data):

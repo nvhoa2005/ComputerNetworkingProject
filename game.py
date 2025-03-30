@@ -20,7 +20,7 @@ class Game:
         # Xác định ai có 3 bích đi trước
         self.find_first_player() 
         self.first_turn = False
-        self.display_hands()
+        # self.display_hands()
     
     def set_texture(self):
         for player_id, hand in self.players.items():
@@ -165,10 +165,6 @@ class Game:
 
     # Đánh bài
     def play_cards(self, player, played_cards):
-        if player != self.current_turn:
-            print("Không phải lượt của bạn")
-            return False
-
         if self.is_valid_play(played_cards):
             self.last_play = played_cards
             # Chuyển lượt

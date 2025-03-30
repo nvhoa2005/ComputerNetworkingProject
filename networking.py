@@ -17,7 +17,7 @@ class Network:
     def connect(self):
         try:
             self.client.connect(self.addr)
-            self.id = self.client.recv(2048).decode()
+            self.id = self.client.recv(4096).decode()
             print(f"Connected to server with ID {self.id}")
         except Exception as e:
             print("Connection failed:", e)

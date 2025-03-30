@@ -45,21 +45,23 @@ class GameUI:
         
         # player id
         print(self.network.id)
-        self.player = int(self.network.id) - 4
+        self.player = int(self.network.id)
         
         # Tạo luồng lắng nghe dữ liệu từ server
         threading.Thread(target=self.network.receive, args=(self.handle_update,), daemon=True).start()
     
     # Nhận được dữ liệu từ server
     def handle_update(self, data):
-        print(f"Dữ liệu nhận được từ server: {data}")
+        if (isinstance(data, dict)) and data.get("game_started"):  
+            return
         if len(data) == 0:
             self.game.pass_turn(self.game.current_turn)
             self.start_time = pygame.time.get_ticks()
             self.selected_cards.clear()
         elif len(data) <= 13:
-            self.selected_cards = data
-            self.play_cards(self.game.current_turn)
+            print(data, len(data))
+            self.selected_cards = set(data)
+            self.play_cards(self.game.current_turn, from_server=True)
     
     # Vòng tròn đếm thời gian 
     def draw_timer_circle(self, player):
@@ -95,9 +97,12 @@ class GameUI:
         if time_passed >= self.turn_time_limit:
             if self.game.last_play:
                 self.game.pass_turn(self.game.current_turn)
+                # gửi gói tin
+                self.action = list(self.selected_cards)
+                self.network.send(self.action)
+                self.action.clear()
                 self.start_time = pygame.time.get_ticks()
                 print(f"Đây là lượt của người chơi: {self.game.current_turn + 1}")
-                self.start_time = pygame.time.get_ticks()
             else:
                 current_player = self.game.current_turn
                 player_hand = self.game.players[current_player]
@@ -109,7 +114,6 @@ class GameUI:
                 self.play_cards(current_player)
                 self.start_time = pygame.time.get_ticks()
                 print(f"Đây là lượt của người chơi: {self.game.current_turn + 1}")
-                self.start_time = pygame.time.get_ticks()
 
     def draw_buttons(self):
         for player in range(FOUR_PLAYERS):
@@ -203,6 +207,10 @@ class GameUI:
                 self.start_time = pygame.time.get_ticks()
                 print(f"Đây là lượt của người chơi: {self.game.current_turn + 1}")
                 self.selected_cards.clear()
+                # gửi gói tin
+                self.action = list(self.selected_cards)
+                self.network.send(self.action)
+                self.action.clear()
             else:
                 print("Đây là vòng mới nên bản không thể bỏ qua lượt đánh này")
             return
@@ -267,12 +275,14 @@ class GameUI:
             self.clock.tick(30)
 
     # Khi người chơi bấm nút đánh
-    def play_cards(self, player):
+    def play_cards(self, player, from_server=False):
         if self.game.current_turn != player:
             print("Không phải lượt của bạn!")
             return
 
         # Các quân bài chuẩn bị đánh theo thứ tự từ yếu đến mạnh
+        print("Check lỗi này")
+        print(self.selected_cards)
         played_cards = sorted(
             [self.game.players[player][i] for _, i in self.selected_cards],
             key=lambda card: (RANK_ORDER[card.rank], SUIT_ORDER[card.suit])
@@ -290,19 +300,23 @@ class GameUI:
                 self.game.players[player].remove(card)
             print(len(self.game.players[player]))
             
-            # gửi gói tin
-            self.action = self.selected_cards
-            self.network.send(self.action)
-            self.action.clear()
-            
-            # Xóa các quân đã chọn
-            self.selected_cards.clear()
+            if not from_server:
+                # gửi gói tin
+                self.action = list(self.selected_cards)
+                # Xóa các quân đã chọn
+                self.selected_cards.clear()
+                self.network.send(self.action)
+                self.action.clear()
+            else:
+                # Xóa các quân đã chọn
+                self.selected_cards.clear()
             
             # check winner
             if self.game.check_winner(player):
                 print(f"Người chơi {player+1} đạt rank {len(self.game.rankings)}")
 
     def run(self):
+        print(f"Đây là người chơi {self.player}")
         while self.running:
             if self.game.check_end():
                 self.running = False
