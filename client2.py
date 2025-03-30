@@ -2,28 +2,33 @@ from networking import Network
 from gameUI import GameUI
 from card import Card
 import threading
+import time
 
-def start_game(data):
-    if data["game_started"]:
-        print("Đã được chia bài")
-        game_data["game_started"] = True 
+def process_data():
+    """ Kiểm tra dữ liệu từ server và xử lý """
+    data = network.get_data()
+    if data and data.get("game_started"):
+        print("Đã được chia bài!")
+        game_data["game_started"] = True
         game_data["hand"] = {
             player_id: [Card.deserialize(card_data) for card_data in cards]
             for player_id, cards in data["cards"].items()
         }
 
+# Khởi tạo kết nối mạng
 network = Network(host="localhost", port=5555)
 network.connect()
 
 game_data = {"hand": [], "game_started": False}
 
 # Bắt đầu luồng nhận dữ liệu
-threading.Thread(target=network.receive, args=(start_game,), daemon=True).start()
+threading.Thread(target=network.receive, args=(process_data,), daemon=True).start()
 
 # Chờ đến khi trò chơi bắt đầu
 print("Chờ các đối thủ vào...")
 while not game_data["game_started"]:
-    pass
+    process_data()  # Kiểm tra dữ liệu mới từ server
+    time.sleep(0.1)  # Giảm tải CPU
 
 print("Trò chơi bắt đầu!")
 

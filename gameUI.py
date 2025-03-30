@@ -5,6 +5,8 @@ from game import Game
 from networking import Network
 import threading
 import math
+import select
+import pickle
 
 class GameUI:
     def __init__(self, cards):
@@ -49,19 +51,24 @@ class GameUI:
         
         # Tạo luồng lắng nghe dữ liệu từ server
         threading.Thread(target=self.network.receive, args=(self.handle_update,), daemon=True).start()
+        self.lock = threading.Lock()
     
     # Nhận được dữ liệu từ server
     def handle_update(self, data):
+        print("Dữ liệu nhận được từ server: ", data)
         if (isinstance(data, dict)) and data.get("game_started"):  
             return
         if len(data) == 0:
+            print("Người chơi trước đó bỏ lượt")
             self.game.pass_turn(self.game.current_turn)
             self.start_time = pygame.time.get_ticks()
             self.selected_cards.clear()
         elif len(data) <= 13:
+            print("Người chơi trước đó đánh")
             print(data, len(data))
             self.selected_cards = set(data)
             self.play_cards(self.game.current_turn, from_server=True)
+        print(f"Đây là lượt của người chơi {self.game.current_turn + 1}")
     
     # Vòng tròn đếm thời gian 
     def draw_timer_circle(self, player):
@@ -325,6 +332,9 @@ class GameUI:
             self.draw_cards()
             self.draw_buttons()
             self.draw_ranking()
+            
+            # self.network.receive(self.handle_update)
+            # threading.Thread(target=self.network.receive, args=(self.handle_update,), daemon=True).start()
             
             # Hiển thị vòng tròn thời gian của người chơi hiện tại
             self.draw_timer_circle(self.game.current_turn)
