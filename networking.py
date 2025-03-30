@@ -17,6 +17,7 @@ class Network:
         self.id = None
         self.data_queue = queue.Queue()  # Hàng đợi để nhận dữ liệu
         self.lock = threading.Lock()
+        self.callback = None
 
     def connect(self):
         try:
@@ -31,19 +32,25 @@ class Network:
 
     def receive(self, callback=None):
         """Luôn lắng nghe dữ liệu từ server và đẩy vào queue để xử lý"""
+        if callback is not None:
+            self.callback = callback  # 🔥 Cập nhật callback mỗi lần gọi
+        print("receive")
         while True:
             try:
                 compressed_data = self.client.recv(4096)
                 if not compressed_data:
                     break
                 data = pickle.loads(compressed_data)
-                # print("📥 Nhận dữ liệu từ server:", data)
+                print("📥 Nhận dữ liệu từ server:", data)
                 # Kiểm tra callback trước khi gọi
                 with self.lock:  # 🔒 Dùng lock để tránh tranh chấp dữ liệu
-                    if callback is not None and callable(callback):
-                        callback(data)
+                    if self.callback is not None:
+                        print("callback")
+                        self.callback(data)
+                    else:
+                        print("Không có callback được truyền")
                     self.data_queue.put(data)
-                self.data_queue.put(data)  # Đưa dữ liệu vào hàng đợi
+                print("Hello")
             except Exception as e:
                 print(f"Kết nối đến server bị mất: {e}")
                 break

@@ -51,7 +51,6 @@ class GameUI:
         
         # Tạo luồng lắng nghe dữ liệu từ server
         threading.Thread(target=self.network.receive, args=(self.handle_update,), daemon=True).start()
-        self.lock = threading.Lock()
     
     # Nhận được dữ liệu từ server
     def handle_update(self, data):
@@ -77,7 +76,8 @@ class GameUI:
         
         # Góc xoay theo thời gian (360 độ trong 10s)
         angle = (remaining_time / self.turn_time_limit) * 360 + 90
-        
+        x = 0
+        y = 0
         # Vị trí của vòng tròn thời gian
         if player == 0:
             x, y = (SCREEN_WIDTH - 450, SCREEN_HEIGHT - 150)

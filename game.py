@@ -168,9 +168,9 @@ class Game:
         if self.is_valid_play(played_cards):
             self.last_play = played_cards
             # Chuyển lượt
-            self.current_turn = (self.current_turn + 1) % 4
+            self.current_turn = (self.current_turn + 1) % FOUR_PLAYERS
             while (self.current_turn in self.passed_players) or (self.current_turn in self.rankings):
-                self.current_turn = (self.current_turn + 1) % 4
+                self.current_turn = (self.current_turn + 1) % FOUR_PLAYERS
             print(f"Người chơi {player + 1} đánh: {', '.join(str(c) for c in played_cards)}")
             return True
         else:
@@ -190,17 +190,17 @@ class Game:
             # Clear bài giữa màn hình
             self.center_cards = [] 
             # Next turn
-            self.current_turn = (self.current_turn + 1) % 4 
+            self.current_turn = (self.current_turn + 1) % FOUR_PLAYERS 
             while (self.current_turn in self.passed_players) or (self.current_turn in [item[0] for item in self.rankings]):
-                self.current_turn = (self.current_turn + 1) % 4
+                self.current_turn = (self.current_turn + 1) % FOUR_PLAYERS
             # Clear những người đã bỏ qua
             self.passed_players.clear()
             print("Vòng chơi mới bắt đầu!")
         else:
             # Next turn
-            self.current_turn = (self.current_turn + 1) % 4 
+            self.current_turn = (self.current_turn + 1) % FOUR_PLAYERS 
             while (self.current_turn in self.passed_players) or (self.current_turn in [item[0] for item in self.rankings]):
-                self.current_turn = (self.current_turn + 1) % 4
+                self.current_turn = (self.current_turn + 1) % FOUR_PLAYERS
             print(f"Người chơi {player + 1} bỏ lượt.")
     
     # win
