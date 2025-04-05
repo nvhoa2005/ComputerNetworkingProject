@@ -1,12 +1,10 @@
 import socket
 import pickle
 import threading
-import pygame
 from const import *
 from card import Card
 import random
 import queue  # Hàng đợi để xử lý dữ liệu không đồng bộ
-import select
 
 class Network:
     def __init__(self, host='localhost', port=5555):

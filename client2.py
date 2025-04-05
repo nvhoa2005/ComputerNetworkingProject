@@ -29,7 +29,6 @@ while not game_data["game_started"]:
     data = network.get_data()  # Lấy dữ liệu từ hàng đợi
     if data:
         process_data(data)  # Gọi process_data với dữ liệu mới
-    time.sleep(0.1)
 
 print("Trò chơi bắt đầu!")
 
